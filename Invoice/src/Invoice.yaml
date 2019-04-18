@@ -1,0 +1,74 @@
+swagger: '2.0'
+info:
+  description: Invoice chaincode for penalty scenario
+  version: '1.0'
+  title: Invoice API's
+consumes:
+  - application/x-www-form-urlencoded
+produces:
+  - application/json
+parameters:
+  invoiceNumber:
+    name: invoiceNumber
+    in: formData
+    description: Invoice Number
+    required: true
+    type: string
+    maxLength: 64
+  rawMaterialNumber:
+    name: rawMaterialNumber
+    in: formData
+    description: Part/Raw Material Number
+    required: true
+    type: string
+    maxLength: 64
+  demandNumber:
+    name: demandNumber
+    in: formData
+    description: Demand Number
+    required: true
+    type: string
+    maxLength: 64
+  invoiceAmount:
+    name: invoiceAmount
+    in: formData
+    description: Invoice Amount
+    required: true
+    type: string
+    maxLength: 64
+paths:
+  '/invoiceForPenalty':
+    post:
+      operationId: createInvoice
+      summary: Create Invoice
+      parameters:
+        - $ref: '#/parameters/invoiceNumber'
+        - $ref: '#/parameters/rawMaterialNumber'
+        - $ref: '#/parameters/demandNumber'
+        - $ref: '#/parameters/invoiceAmount'
+      responses:
+        '201':
+          description: Invoice Created Successfully
+        '406':
+          description: Invalid Parameters
+        '409':
+          description: Invoice already exists
+        '500':
+          description: Internal Server Error
+  '/invoiceForPenalty/getInvoiceAmountById':
+    post:
+      operationId: getInvoiceAmountById
+      summary: Get Invoice Amount
+      parameters:
+        - $ref: '#/parameters/demandNumber'
+        - $ref: '#/parameters/rawMaterialNumber'
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              text:
+                type: string
+        '404':
+          description: Not Found

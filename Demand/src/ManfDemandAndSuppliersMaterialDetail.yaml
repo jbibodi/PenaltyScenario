@@ -1,0 +1,205 @@
+swagger: '2.0'
+info:
+  description: Test chaincode for penalty scenario
+  version: '1.0'
+  title: Penalty Scenario
+consumes:
+  - application/x-www-form-urlencoded
+produces:
+  - application/json
+parameters:
+  demandNumber:
+    name: demandNumber
+    in: formData
+    description: Demand Number
+    required: true
+    type: string
+    maxLength: 64
+  supplierCode:
+    name: supplierCode
+    in: formData
+    description: Supplier Code
+    required: true
+    type: string
+    maxLength: 64
+  supplierLocation:
+    name: supplierLocation
+    in: formData
+    description: Supplier Location
+    required: true
+    type: string
+    maxLength: 64
+  rawMaterialNumber:
+    name: rawMaterialNumber
+    in: formData
+    description: Part/Raw Material Number
+    required: true
+    type: string
+    maxLength: 64
+  delayReason:
+    name: delayReason
+    in: formData
+    description: Reason for delayed delivery
+    required: true
+    type: string
+    maxLength: 255
+  actualDate:
+    name: actualDate
+    in: formData
+    description: Actual Date product got delivered
+    required: true
+    type: string
+    maxLength: 64
+  expectedDate:
+    name: expectedDate
+    in: formData
+    description: Expected Date for product delivery
+    required: true
+    type: string
+    maxLength: 64
+  supplierFacilityName:
+    name: supplierFacilityName
+    in: formData
+    description: Supplier Facility Name
+    required: true
+    type: string
+    maxLength: 64
+  timestamp:
+    name: timestamp
+    in: formData
+    description: Timestamp 
+    required: true
+    type: string
+    maxLength: 64
+  trackStatus:
+    name: trackStatus
+    in: formData
+    description: Tracking status
+    required: true
+    type: string
+    maxLength: 64
+  trackingId:
+    name: trackingId
+    in: formData
+    description: Tracking Number
+    required: true
+    type: string
+    maxLength: 64
+  state:
+    name: state
+    in: formData
+    description: Tracking state
+    required: true
+    type: string
+    maxLength: 64
+  reason:
+    name: reason
+    in: formData
+    description: Tracking reason
+    required: true
+    type: string
+    maxLength: 64
+paths:
+  '/PenaltyUseCase':
+    get:
+      operationId: getAllDemand
+      summary: Get all demand orders
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              text:
+                type: string
+        '404':
+          description: Not Found
+  '/PenaltyUseCase/getAllRawMaterialInfo':
+    get:
+      operationId: getAllPartNumber
+      summary: Get Parts/Raw material Information which are supplied or needs to be supplied.
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              text:
+                type: string
+        '404':
+          description: Not Found  
+  '/PenaltyUseCase/createDemand':
+    post:
+      operationId: createDemand
+      summary: Create Demand
+      parameters:
+        - $ref: '#/parameters/demandNumber'
+        - $ref: '#/parameters/supplierCode'
+        - $ref: '#/parameters/supplierLocation'
+      responses:
+        '201':
+          description: Demand Created Successfully
+        '406':
+          description: Invalid Parameters
+        '409':
+          description: Demand already exists
+        '500':
+          description: Internal Server Error
+  '/PenaltyUseCase/createRawMaterialExpectedInfo':
+    post:
+      operationId: createRawMaterialExpectedInfo
+      summary: Create Raw material expected delivery info
+      parameters:
+        - $ref: '#/parameters/rawMaterialNumber'
+        - $ref: '#/parameters/demandNumber'
+        - $ref: '#/parameters/expectedDate'
+      responses:
+        '201':
+          description: Raw material expected delivery info created Successfully
+        '406':
+          description: Invalid Parameters
+        '409':
+          description: Raw Material Expected Date Information exists
+        '500':
+          description: Internal Server Error
+  '/PenaltyUseCase/createRawMaterialActualInfo':
+    post:
+      operationId: createRawMaterialActualInfo
+      summary: Create Raw material actual delivery info
+      parameters:
+        - $ref: '#/parameters/rawMaterialNumber'
+        - $ref: '#/parameters/demandNumber'
+        - $ref: '#/parameters/actualDate'
+        - $ref: '#/parameters/delayReason'
+      responses:
+        '201':
+          description: Raw material actual delivery info created Successfully
+        '406':
+          description: Invalid Parameters
+        '409':
+          description: Raw Material Actual Date Information exists
+        '500':
+          description: Internal Server Error
+  '/PenaltyUseCase/createMaterialTracking':
+    post:
+      operationId: createMaterialTracking
+      summary: Create Material tracking info
+      parameters:
+        - $ref: '#/parameters/trackingId'
+        - $ref: '#/parameters/rawMaterialNumber'
+        - $ref: '#/parameters/demandNumber'
+        - $ref: '#/parameters/supplierFacilityName'
+        - $ref: '#/parameters/timestamp'
+        - $ref: '#/parameters/trackStatus'
+        - $ref: '#/parameters/state'
+        - $ref: '#/parameters/reason'
+      responses:
+        '201':
+          description: Raw material actual delivery info created Successfully
+        '406':
+          description: Invalid Parameters
+        '409':
+          description: Raw Material Actual Date Information exists
+        '500':
+          description: Internal Server Error
+          
