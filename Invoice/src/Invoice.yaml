@@ -8,13 +8,6 @@ consumes:
 produces:
   - application/json
 parameters:
-  invoiceNumber:
-    name: invoiceNumber
-    in: formData
-    description: Invoice Number
-    required: true
-    type: string
-    maxLength: 64
   rawMaterialNumber:
     name: rawMaterialNumber
     in: formData
@@ -42,7 +35,6 @@ paths:
       operationId: createInvoice
       summary: Create Invoice
       parameters:
-        - $ref: '#/parameters/invoiceNumber'
         - $ref: '#/parameters/rawMaterialNumber'
         - $ref: '#/parameters/demandNumber'
         - $ref: '#/parameters/invoiceAmount'

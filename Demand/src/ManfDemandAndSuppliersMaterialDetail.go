@@ -257,6 +257,7 @@ func (cc *PurchaseOrder) getAllPurchaseOrder(stub shim.ChaincodeStubInterface, a
 		
 		buffer = getMaterialInformation(purchaseOrderObject.PurchaseOrderNumber,buffer)
 		
+		buffer.WriteString("}")
 		bArrayMemberAlreadyWritten = true
 	}
 	
@@ -309,10 +310,10 @@ func getMaterialInformation(purchaseOrderNumber string,buffer bytes.Buffer)(x by
 			buffer.WriteString(",")
 		}
 		
-		var expectedRawMaterialInfo RawMaterialExpectedInformation
-		json.Unmarshal(expectedPartResponse.Value,&expectedRawMaterialInfo)
+		var expectedMaterialInformation ExpectedMaterialInformation
+		json.Unmarshal(expectedPartResponse.Value,&expectedMaterialInformation)
 		
-		buffer = getMaterialInformation(purchaseOrderNumber,expectedRawMaterialInfo,buffer)
+		buffer = getMaterialInformation(purchaseOrderNumber,expectedMaterialInformation,buffer)
 		
 		partInfoAlreadyWritten = true
 	}
@@ -321,24 +322,92 @@ func getMaterialInformation(purchaseOrderNumber string,buffer bytes.Buffer)(x by
 	return
 }
 
-func getMaterialInformation(purchaseOrderNumber string,expectedRawMaterialInfo ExpectedMaterialInformation,buffer bytes.Buffer) (x bytes.Buffer) {
+func getMaterialInformation(purchaseOrderNumber string,expectedMaterialInformation ExpectedMaterialInformation,buffer bytes.Buffer) (x bytes.Buffer) {
 	buffer.WriteString("{\"rawMaterialNumber\":")
 	buffer.WriteString("\"")
-	buffer.WriteString(expectedRawMaterialInfo.MaterialNumber)
+	buffer.WriteString(expectedMaterialInformation.MaterialNumber)
+	buffer.WriteString("\"")
+	buffer.WriteString(",")
+
+	buffer = getTrackingInfo(purchaseOrderNumber,expectedMaterialInformation.MaterialNumber,buffer)
+	buffer.WriteString(",")
+
+	actualDate := ""
+
+	buffer,actualDate = getActualDateInformationForMaterial(purchaseOrderNumber,expectedMaterialInformation.MaterialNumber,buffer)
+	buffer.WriteString(",")
+
+	buffer = getInvoiceInformation(purchaseOrderNumber,expectedMaterialInformation,actualDate,buffer)
+	buffer.WriteString(",")
+
+	x = buffer
+	return
+}
+
+func getInvoiceInformation(purchaseOrderNumber string,expectedMaterialInformation ExpectedMaterialInformation,actualDate string,buffer bytes.Buffer) (x bytes.Buffer) {
+	// Check if invoice exists
+	f := "getInvoiceAmountById"
+	queryArgs := toChaincodeArgs(f, purchaseOrderNumber,expectedMaterialInformation.MaterialNumber,expectedMaterialInformation.ExpectedDate,actualDate)
+
+	invoiceResponse := stub.InvokeChaincode("a3596e82-9760-494a-bad7-31ffc9530b7e-com-sap-icn-blockchain-invoice-penalty-scenario",queryArgs,"")	
+
+	var invoice Invoice
+	json.Unmarshal(invoiceResponse.Payload, &invoice)
+	
+	buffer.WriteString("\"invoiceAmount\":")
+	buffer.WriteString("\"")
+	buffer.WriteString(invoice.InvoiceAmount)
 	buffer.WriteString("\"")
 	
-	buffer = getTrackingInfo(purchaseOrderNumber,expectedRawMaterialInfo.MaterialNumber,buffer)
-	x = 
+	buffer.WriteString("\"delayPenalty\":")
+	buffer.WriteString("\"")
+	buffer.WriteString(invoice.DelayPenalty)
+	buffer.WriteString("\"")
+
+	timeFormat := "01/02/2006"
+	stateOfDelivery := ""
+}
+
+func getActualDateInformationForMaterial(purchaseOrderNumber string, materialNumber string,buffer bytes.Buffer) (x bytes.Buffer,actualDate string,) {
+	queryString = fmt.Sprintf("{\"selector\":{\"ac_PurchaseOrderNumber\":\""+purchaseOrderNumber+"\",\"materialNumber\":\""+materialNumber+"\"}}")
+			
+	actualPartResultsIterator, _ := stub.GetQueryResult(queryString)
+	defer actualPartResultsIterator.Close()
+	
+	actualDate := ""
+	delayReasonTemp := ""
+	
+	for actualPartResultsIterator.HasNext() {
+		actualPartResponse, _ := actualPartResultsIterator.Next()
+		
+		var actualMaterialInfo ActualMaterialInformation
+		json.Unmarshal(actualPartResponse.Value,&actualMaterialInfo)
+		
+		buffer.WriteString(", \"delayReason\":")
+		buffer.WriteString("\"")
+		buffer.WriteString(actualMaterialInfo.DelayReason)
+		buffer.WriteString("\"")
+		delayReasonTemp = actualMaterialInfo.DelayReason
+		
+		buffer.WriteString(", \"actualDate\":")
+		buffer.WriteString("\"")
+		buffer.WriteString(actualMaterialInfo.ActualDate)
+		buffer.WriteString("\"")
+		
+		actualDate = actualMaterialInfo.ActualDate
+		
+		break;
+	}
+	x = buffer
 	return
 }
 
 func getTrackingInfo(purchaseOrderNumber string, materialNumber string,buffer bytes.Buffer) (x bytes.Buffer) {
-	// fetch tracking
-	queryString = fmt.Sprintf("{\"selector\":{\"trackOrderNumber\":\""+(demandInfoObject.DemandNumber)+"\",\"trackPartNumber\":\""+(expectedRawMaterialInfo.RawMaterialNumber)+"\"}}")
+	queryString = fmt.Sprintf("{\"selector\":{\"trackPurchaseOrderNumber\":\""+purchaseOrderNumber+"\",\"trackMaterialNumber\":\""+materialNumber+"\"}}")
 	trackingPartResultsIterator, _ := stub.GetQueryResult(queryString)
 	defer trackingPartResultsIterator.Close()
 	
-	buffer.WriteString(", \"trackingInfo\":")
+	buffer.WriteString("\"trackingInfo\":")
 	buffer.WriteString("[")
 	
 	isTrackingInfoPresent := false
@@ -352,7 +421,7 @@ func getTrackingInfo(purchaseOrderNumber string, materialNumber string,buffer by
 		if isTrackingInfoPresent == true {
 			buffer.WriteString(",")
 		}
-		
+
 		buffer.WriteString("{\"supplierFacilityName\":")
 		buffer.WriteString("\"")
 		buffer.WriteString(trackingInfo.SupplierFacilityName)
@@ -365,12 +434,12 @@ func getTrackingInfo(purchaseOrderNumber string, materialNumber string,buffer by
 		
 		buffer.WriteString(", \"reason\":")
 		buffer.WriteString("\"")
-		buffer.WriteString(trackingInfo.Reason)
+		buffer.WriteString(trackingInfo.TrackOrderReason)
 		buffer.WriteString("\"")
 		
 		buffer.WriteString(", \"state\":")
 		buffer.WriteString("\"")
-		buffer.WriteString(trackingInfo.State)
+		buffer.WriteString(trackingInfo.TrackOrderState)
 		buffer.WriteString("\"")
 		
 		buffer.WriteString(", \"timestamp\":")
@@ -382,6 +451,8 @@ func getTrackingInfo(purchaseOrderNumber string, materialNumber string,buffer by
 	}
 	
 	buffer.WriteString("]")
+	x = buffer
+	return
 }
 
 
