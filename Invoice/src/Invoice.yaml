@@ -8,17 +8,17 @@ consumes:
 produces:
   - application/json
 parameters:
-  rawMaterialNumber:
-    name: rawMaterialNumber
+  materialNumber:
+    name: materialNumber
     in: formData
-    description: Part/Raw Material Number
+    description: Part/Material Number
     required: true
     type: string
     maxLength: 64
-  demandNumber:
-    name: demandNumber
+  purchaseOrderNumber:
+    name: purchaseOrderNumber
     in: formData
-    description: Demand Number
+    description: Purchase Order Number
     required: true
     type: string
     maxLength: 64
@@ -29,14 +29,28 @@ parameters:
     required: true
     type: string
     maxLength: 64
+  expectedDate:
+    name: expectedDate
+    in: formData
+    description: Expected Delivery Date
+    required: false
+    type: string
+    maxLength: 64
+  actualDate:
+    name: actualDate
+    in: formData
+    description: Actual Delivery Date
+    required: false
+    type: string
+    maxLength: 64
 paths:
   '/invoiceForPenalty':
     post:
       operationId: createInvoice
       summary: Create Invoice
       parameters:
-        - $ref: '#/parameters/rawMaterialNumber'
-        - $ref: '#/parameters/demandNumber'
+        - $ref: '#/parameters/materialNumber'
+        - $ref: '#/parameters/purchaseOrderNumber'
         - $ref: '#/parameters/invoiceAmount'
       responses:
         '201':
@@ -52,8 +66,10 @@ paths:
       operationId: getInvoiceAmountById
       summary: Get Invoice Amount
       parameters:
-        - $ref: '#/parameters/demandNumber'
-        - $ref: '#/parameters/rawMaterialNumber'
+        - $ref: '#/parameters/purchaseOrderNumber'
+        - $ref: '#/parameters/materialNumber'
+        - $ref: '#/parameters/expectedDate'
+        - $ref: '#/parameters/actualDate'
       responses:
         '200':
           description: OK

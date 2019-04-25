@@ -74,7 +74,7 @@ func (cc *Invoice) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 func (cc *Invoice) createInvoice(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// check total parameters
-	if len(args) != 4 {
+	if len(args) != 3 {
 		return Error(http.StatusNotAcceptable, "Invalid parameters!")
 	}
 	
@@ -161,7 +161,7 @@ func (cc *Invoice) getInvoiceAmountById(stub shim.ChaincodeStubInterface, args [
 /**
  * Function to create invoice object which will be sent as the response in form of bytes
  */
-func createInvoiceObject(invoiceData Invoice,expectedDate string,actualDate string,buffer bytes.Buffer) (x bytes.Buffer) {
+func createInvoiceObject(invoiceData Invoice,expectedDate string,actualDate string,buffer bytes.Buffer) (xy bytes.Buffer) {
 	// store invoice amount in buffer
 	buffer.WriteString("{\"invoiceAmount\":")
 	buffer.WriteString("\"")
@@ -176,15 +176,20 @@ func createInvoiceObject(invoiceData Invoice,expectedDate string,actualDate stri
 	currDate := time.Now()
 	
 	// convert curr date into string
-	currDateInStr := x.Format(timeFormat)
+	currDateInStr := currDate.Format(timeFormat)
 
 	// variables to keep track of status, state and penalty amount
-	status := "", state := "", delayPenalty := ""
+	status := "" 
+	state := ""
+	delayPenalty := ""
 
 	// case 1: when expected date is not empty but actual date is empty
 	if expectedDate != "" && actualDate == "" {
 		// get difference between current date and expected date
-		diff = := currDateInStr.sub(expectedDate)
+		currDateInDateFormat, _ := time.Parse(timeFormat,currDateInStr)
+		expectedDateInDateFormat, _ := time.Parse(timeFormat,expectedDate)
+
+		diff := currDateInDateFormat.Sub(expectedDateInDateFormat)
 
 		// get diff in terms of days
 		dayDiff := (diff.Hours())/24
@@ -193,7 +198,7 @@ func createInvoiceObject(invoiceData Invoice,expectedDate string,actualDate stri
 		if dayDiff > float64(0) {
 			// diff between curr date and expected is > 0 and actual date is not present, delayed + diff between currDate and ExpectedDate
 			x := fmt.Sprintf("%.0f",dayDiff)
-			status = "Delayed+"x
+			status = "Delayed+"+x
 			state = "Error"
 			delayPenalty = "-"
 		} else {	// case 1.2: if expected date is greater then current date, it is assumed material will be delivered on time.
@@ -204,10 +209,10 @@ func createInvoiceObject(invoiceData Invoice,expectedDate string,actualDate stri
 		}
 
 	} else if expectedDate != "" && actualDate != "" { // case 2: when expected and actual date are present
-		// parsing expected date
-		ed, _ := time.Parse(timeFormat,expectedRawMaterialInfo.ExpectedDate)
+		// parsing expected date to date format from string
+		ed, _ := time.Parse(timeFormat,expectedDate)
 
-		// parsing actual date
+		// parsing actual date to date format from string
 		ad, _ := time.Parse(timeFormat,actualDate)
 		
 		// calculate diff between expected and actual date
@@ -240,7 +245,7 @@ func createInvoiceObject(invoiceData Invoice,expectedDate string,actualDate stri
 			}
 			
 			// calculate penalty amount
-			InvoiceAmountFloat, _ := strconv.ParseFloat((invoice.InvoiceAmount),32)
+			InvoiceAmountFloat, _ := strconv.ParseFloat((invoiceData.InvoiceAmount),32)
 			InvoicePenalty := (InvoiceAmountFloat*float64(penaltyPercentage)) / 100
 			invoicePenaltyStr := fmt.Sprintf("%.2f", InvoicePenalty );
 
@@ -267,6 +272,6 @@ func createInvoiceObject(invoiceData Invoice,expectedDate string,actualDate stri
 	buffer.WriteString(delayPenalty)
 	buffer.WriteString("\"}")
 
-	x = buffer
+	xy = buffer
 	return
 }
